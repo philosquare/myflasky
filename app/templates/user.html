@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Hello</title>
+</head>
+<body>
+    <h1>Hello, {% if name %}{{ name|capitalize }}{% else %}Stranger{% endif %}!</h1>
+    <form action="/user" method="post">
+        <input type="text" name="name"><br>
+        <input type="submit" value="Submitla">
+    </form>
+</body>
+</html>

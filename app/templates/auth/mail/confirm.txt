@@ -1,0 +1,9 @@
+Dear {{ user.username }},
+
+Welcome to Flasky
+
+click here to confirm your account
+
+{{ url_for('auth.confirm', token=token, _external=True) }}
+
+this is plain text email
