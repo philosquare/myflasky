@@ -1,0 +1,9 @@
+Dear {{ user.username }},
+
+Welcome to Flasky
+
+click here to reset your password
+
+{{ url_for('auth.reset_password_token', token=token, _external=True) }}
+
+this is plain text email

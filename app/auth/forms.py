@@ -43,3 +43,16 @@ class ChangePasswordForm(FlaskForm):
     def validate_old_password(self, field):
         if current_user.verify_password(field.data) is False:
             raise ValidationError('wrong password')
+
+
+class ForgetPassword(FlaskForm):
+    email = StringField('Email', validators=[DataRequired(), Length(1, 64), Email()])
+    submit = SubmitField('Submit')
+
+
+class ResetPassword(FlaskForm):
+    email = StringField('Email', validators=[DataRequired(), Length(1, 64), Email()])
+    new_password = PasswordField('new password', validators=[DataRequired()])
+    new_password2 = PasswordField('confirm password', validators=[
+        DataRequired(), equal_to('new_password', 'password not match')])
+    submit = SubmitField('Submit')

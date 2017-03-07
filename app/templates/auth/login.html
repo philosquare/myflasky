@@ -14,6 +14,10 @@
         New user?
         <a href="{{ url_for('auth.register') }}">Sign Up</a>
     </p>
+    <p>
+        Forget your password?
+        <a href="{{ url_for('auth.reset_password') }}">Reset Password</a>
+    </p>
 </div>
 
 {% endblock %}

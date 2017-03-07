@@ -9,7 +9,7 @@ from flask_login import login_user
 from flask_login import logout_user
 
 from app import db
-from app.auth.forms import LoginForm, RegistrationForm, ChangePasswordForm
+from app.auth.forms import LoginForm, RegistrationForm, ChangePasswordForm, ResetPassword, ForgetPassword
 from app.email import send_email
 from app.models import User
 from . import auth
@@ -99,3 +99,37 @@ def change_password():
         flash('change password successfully!')
         return redirect(url_for('main.index'))
     return render_template('auth/change_password.html', form=form)
+
+
+@auth.route('/reset_password', methods=['GET', 'POST'])
+def reset_password():
+    form = ForgetPassword()
+    if form.validate_on_submit():
+        user = User.query.filter_by(email=form.email.data).first()
+        if user is not None:
+            token = user.generate_confirmation_token()
+            send_email(user.email, 'Reset Your Password', 'auth/mail/reset',
+                       token=token, user=user)
+            flash('Please check your email to reset password')
+            return redirect(url_for('main.index'))
+        flash("email didn't registered")
+    return render_template('auth/forget_password.html', form=form)
+
+
+@auth.route('/reset_password/<token>', methods=['POST', 'GET'])
+def reset_password_token(token):
+    form = ResetPassword()
+    if form.validate_on_submit():
+        user = User.query.filter_by(email=form.email.data).first()
+        if user:
+            if user.confirm(token):
+                user.password = form.new_password.data
+                db.session.add(user)
+                flash('password has been changed')
+                return redirect(url_for('main.index'))
+            else:
+                flash('wrong or expired token, please reset again')
+                return redirect(url_for('reset_password'))
+        else:
+            flash("email didn't registered")
+    return render_template('auth/reset_password.html', form=form)
