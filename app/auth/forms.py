@@ -1,3 +1,4 @@
+from flask_login import current_user
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, BooleanField, SubmitField
 from wtforms.validators import DataRequired, Length, Email, Regexp, equal_to, ValidationError
@@ -30,3 +31,15 @@ class RegistrationForm(FlaskForm):
     def validate_username(self, field):
         if User.query.filter_by(username=field.data).first():
             raise ValidationError('username has been registered')
+
+
+class ChangePasswordForm(FlaskForm):
+    old_password = PasswordField('old_password', validators=[DataRequired()])
+    new_password = PasswordField('new_password', validators=[DataRequired()])
+    new_password2 = PasswordField('confirm password', validators=[
+        DataRequired(), equal_to('new_password', 'password not match')])
+    submit = SubmitField('Submit')
+
+    def validate_old_password(self, field):
+        if current_user.verify_password(field.data) is False:
+            raise ValidationError('wrong password')
