@@ -56,3 +56,14 @@ class ResetPassword(FlaskForm):
     new_password2 = PasswordField('confirm password', validators=[
         DataRequired(), equal_to('new_password', 'password not match')])
     submit = SubmitField('Submit')
+
+
+class ChangeEmail(FlaskForm):
+    email = StringField('Email', validators=[DataRequired(), Length(1, 64), Email()])
+    password = PasswordField('password', validators=[DataRequired()])
+    submit = SubmitField('Submit')
+
+    def validate_email(self, field):
+        if User.query.filter_by(email=field.data).first():
+            raise ValidationError('Email has been registered')
+
