@@ -1,5 +1,5 @@
 from datetime import datetime
-from flask import session, current_app, redirect, url_for, render_template
+from flask import session, current_app, redirect, url_for, render_template, abort
 from flask_login import login_required
 
 from app.decorators import admin_required
@@ -35,3 +35,11 @@ def index():
 @admin_required
 def admin():
     return 'you are admin'
+
+
+@main.route('/user/<username>')
+def user(username):
+    user = User.query.filter_by(username=username).first()
+    if user is None:
+        abort(404)
+    return render_template('user.html', user=user)
