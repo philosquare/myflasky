@@ -27,12 +27,12 @@ class DevConfig(Config):
 
 class TestConfig(Config):
     TESTING = True
-    SQLALCHEMY_COMMIT_ON_TEARDOWN = os.getenv('TEST_DATABASE_URI') or \
+    SQLALCHEMY_DATABASE_URI = os.getenv('TEST_DATABASE_URI') or \
         'sqlite:///' + os.path.join(basedir, 'data-test.sqlite')
 
 
 class ProductionConfig(Config):
-    SQLALCHEMY_COMMIT_ON_TEARDOWN = os.getenv('DATABASE_URI') or \
+    SQLALCHEMY_DATABASE_URI = os.getenv('DATABASE_URI') or \
         'sqlite:///' + os.path.join(basedir, 'data.sqlite')
 
 

@@ -1,5 +1,8 @@
 from datetime import datetime
 from flask import session, current_app, redirect, url_for, render_template
+from flask_login import login_required
+
+from app.decorators import admin_required
 from . import main
 from app import db
 from app.email import send_email
@@ -26,3 +29,9 @@ def index():
         return redirect(url_for('.index'))
     return render_template('index.html', time=datetime.utcnow())
 
+
+@main.route('/admin')
+@login_required
+@admin_required
+def admin():
+    return 'you are admin'
