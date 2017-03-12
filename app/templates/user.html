@@ -4,6 +4,17 @@
 {% block page_content %}
 <div class="page-header">
     <h1>{{ user.username }}</h1>
+
+    {% if user == current_user %}
+    <a class="btn btn-default" href="{{ url_for('main.edit_profile') }}">Edit</a>
+    {% endif %}
+
+    {% if current_user.is_administrator %}
+    <a class="btn btn-danger" href="{{ url_for('main.edit_profile_admin', id=user.id) }}">
+        Edit Profile [Admin]
+    </a>
+    {% endif %}
+
     {% if user.name or user.location %}
     <p>
         {% if user.name %}{{ user.name }}{% endif %}
