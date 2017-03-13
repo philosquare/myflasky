@@ -1,6 +1,8 @@
+import hashlib
 from datetime import datetime
 
 from flask import current_app
+from flask import request
 from flask_login import UserMixin, AnonymousUserMixin
 from itsdangerous import TimedJSONWebSignatureSerializer as Serializer
 
@@ -21,6 +23,7 @@ class User(UserMixin, db.Model):
     about_me = db.Column(db.Text())
     member_since = db.Column(db.DateTime(), default=datetime.utcnow)
     last_seen = db.Column(db.DateTime(), default=datetime.utcnow)
+    avatar_hash = db.Column(db.String(32))
 
     def __init__(self, **kwargs):
         super(User, self).__init__(**kwargs)
@@ -29,6 +32,7 @@ class User(UserMixin, db.Model):
                 self.role = Role.query.filter_by(permissions=0xff).first()
             if self.role is None:
                 self.role = Role.query.filter_by(default=True).first()
+        self.avatar_hash = hashlib.md5(self.email.encode('utf-8')).hexdigest()
 
     def ping(self):
         self.last_seen = datetime.utcnow()
@@ -82,9 +86,19 @@ class User(UserMixin, db.Model):
             return False
         if data.get('email'):
             self.email = data.get('email')
+            self.avatar_hash = hashlib.md5(self.email.encode('utf-8')).hexdigest()
             db.session.add(self)
             return True
         return False
+
+    def gravatar(self, size=100, default='identicon', rating='g'):
+        if request.is_secure:
+            url = 'https://secure.gravatar.com/avatar'
+        else:
+            url = 'http://www.gravatar.com/avatar'
+        hash = self.avatar_hash or hashlib.md5(self.email.encode('utf-8')).hexdigest()
+        return '{url}/{hash}?s={size}&d={default}&r={rating}'.format(
+            url=url, hash=hash, size=size, default=default, rating=rating)
 
     def __repr__(self):
         return '<User %s, email:%s>' % (self.username, self.email)
@@ -108,7 +122,6 @@ class Role(db.Model):
 
     def __repr__(self):
         return '<Role %s>' % self.name
-
 
     @staticmethod
     def insert_roles():
