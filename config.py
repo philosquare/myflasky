@@ -13,7 +13,7 @@ class Config(object):
     MAIL_USERNAME = 'a188616786a@csu.edu.cn'
     MAIL_PASSWORD = '00432791'
     FLASKY_MAIL_SENDER = 'me <a188616786a@csu.edu.cn>'
-    FLASKY_POSTS_PER_PAGE = 20
+    FLASKY_POSTS_PER_PAGE = 5
 
     @staticmethod
     def init_app():
