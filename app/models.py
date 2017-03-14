@@ -1,10 +1,13 @@
 import hashlib
 from datetime import datetime
 
+import bleach
 from flask import current_app
 from flask import request
 from flask_login import UserMixin, AnonymousUserMixin
 from itsdangerous import TimedJSONWebSignatureSerializer as Serializer
+from markdown import markdown
+from sqlalchemy import event
 
 from . import db, login_manager
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -33,7 +36,6 @@ class User(UserMixin, db.Model):
                 self.role = Role.query.filter_by(permissions=0xff).first()
             if self.role is None:
                 self.role = Role.query.filter_by(default=True).first()
-        self.avatar_hash = hashlib.md5(self.email.encode('utf-8')).hexdigest()
 
     def ping(self):
         self.last_seen = datetime.utcnow()
@@ -87,7 +89,6 @@ class User(UserMixin, db.Model):
             return False
         if data.get('email'):
             self.email = data.get('email')
-            self.avatar_hash = hashlib.md5(self.email.encode('utf-8')).hexdigest()
             db.session.add(self)
             return True
         return False
@@ -174,6 +175,7 @@ class Post(db.Model):
     __tablename__ = 'posts'
     id = db.Column(db.Integer, primary_key=True)
     body = db.Column(db.Text())
+    body_html = db.Column(db.Text())
     timestamp = db.Column(db.DateTime(), default=datetime.utcnow(), index=True)
     author_id = db.Column(db.Integer, db.ForeignKey('users.id'))
 
@@ -204,5 +206,21 @@ class Permission:
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
+
+
+@event.listens_for(Post.body, 'set')
+def on_change_body(target, value, oldvalue, initiator):
+    allowed_tags = ['a', 'abbr', 'acronym', 'b', 'blockquote', 'code',
+                    'em', 'i', 'li', 'ol', 'pre', 'strong', 'ul',
+                    'h1', 'h2', 'h3', 'p']
+    target.body_html = bleach.linkify(bleach.clean(
+        markdown(value, output_format='html'),
+        tags=allowed_tags, strip=True
+    ))
+
+
+@event.listens_for(User.email, 'set')
+def on_change_email(target, value, oldvalue, initiator):
+    target.avatar_hash = hashlib.md5(value.encode('utf-8')).hexdigest()
 
 login_manager.anonymous_user = AnonymousUser
