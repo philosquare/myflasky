@@ -5,11 +5,6 @@ from wtforms.validators import DataRequired, Length, Email, Regexp, ValidationEr
 from app.models import Role, User
 
 
-class NameForm(FlaskForm):
-    name = StringField('please input your name', validators=[DataRequired()])
-    submit = SubmitField('Submit')
-
-
 class EditProfileForm(FlaskForm):
     name = StringField('your real name', validators=[Length(0, 64)])
     location = StringField('your location', validators=[Length(0, 64)])
@@ -42,3 +37,8 @@ class EditProfileAdminForm(FlaskForm):
     def validate_username(self, field):
         if field.data != self.user.username and User.query.filter_by(username=field.data).first():
             raise ValidationError('username has been registered')
+
+
+class PostForm(FlaskForm):
+    body = TextAreaField("what's on your mind?", validators=[DataRequired()])
+    submit = SubmitField('Submit')

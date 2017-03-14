@@ -8,29 +8,20 @@ from flask_login import login_required
 from app.decorators import admin_required
 from . import main
 from app import db
-from app.email import send_email
-from .forms import NameForm, EditProfileForm, EditProfileAdminForm
-from ..models import User, Role
+from .forms import EditProfileForm, EditProfileAdminForm, PostForm
+from ..models import User, Role, Post
 
 
 @main.route('/', methods=['POST', 'GET'])
 def index():
-    form = NameForm()
+    form = PostForm()
     if form.validate_on_submit():
-        name = form.name.data
-        session['name'] = name
-        if User.query.filter_by(username=name).first():
-            session['known'] = True
-        else:
-            session['known'] = False
-            user = User(username=name)
-            db.session.add(user)
-            db.session.commit()
-            if current_app.config.get('FLASKY_ADMIN'):
-                send_email(to=current_app.config['FLASKY_ADMIN'],
-                           subject='New User', template='mail/new_user', user=user)
+        post = Post(body=form.body.data, author_id=current_user.id)
+        db.session.add(post)
+        flash('post successfully')
         return redirect(url_for('.index'))
-    return render_template('index.html', time=datetime.utcnow())
+    posts = Post.query.order_by(Post.timestamp.desc()).all()
+    return render_template('index.html', form=form, posts=posts)
 
 
 @main.route('/admin')
