@@ -1,7 +1,7 @@
-from datetime import datetime
-
+from flask import current_app
 from flask import flash
-from flask import session, current_app, redirect, url_for, render_template, abort
+from flask import redirect, url_for, render_template, abort
+from flask import request
 from flask_login import current_user
 from flask_login import login_required
 
@@ -20,8 +20,12 @@ def index():
         db.session.add(post)
         flash('post successfully')
         return redirect(url_for('.index'))
-    posts = Post.query.order_by(Post.timestamp.desc()).all()
-    return render_template('index.html', form=form, posts=posts)
+    page = request.args.get('page', 1, type=int)
+    pagination = Post.query.order_by(Post.timestamp.desc()).paginate(
+        page=page, per_page=current_app.config['FLASKY_POSTS_PER_PAGE'], error_out=False
+    )
+    posts = pagination.items
+    return render_template('index.html', form=form, posts=posts, pagination=pagination)
 
 
 @main.route('/admin')
@@ -36,7 +40,8 @@ def user(username):
     user = User.query.filter_by(username=username).first()
     if user is None:
         abort(404)
-    return render_template('user.html', user=user)
+    posts = Post.query.filter_by(author=user).order_by(Post.timestamp.desc()).all()
+    return render_template('user.html', user=user, posts=posts)
 
 
 @main.route('/edit_profile', methods=['GET', 'POST'])

@@ -101,6 +101,30 @@ class User(UserMixin, db.Model):
         return '{url}/{hash}?s={size}&d={default}&r={rating}'.format(
             url=url, hash=hash, size=size, default=default, rating=rating)
 
+    @staticmethod
+    def generate_fake(count=100):
+        from sqlalchemy.exc import IntegrityError
+        import forgery_py
+        from random import seed
+
+        seed()
+        for i in range(count):
+            user = User(
+                username=forgery_py.internet.user_name(True),
+                email=forgery_py.internet.email_address(),
+                password=forgery_py.lorem_ipsum.word(),
+                confirmed=True,
+                location=forgery_py.address.city(),
+                name=forgery_py.name.full_name(),
+                about_me=forgery_py.lorem_ipsum.sentence(),
+                member_since=forgery_py.date.date(True)
+            )
+            db.session.add(user)
+            try:
+                db.session.commit()
+            except IntegrityError:
+                db.session.rollback()
+
     def __repr__(self):
         return '<User %s, email:%s>' % (self.username, self.email)
 
@@ -152,6 +176,21 @@ class Post(db.Model):
     body = db.Column(db.Text())
     timestamp = db.Column(db.DateTime(), default=datetime.utcnow(), index=True)
     author_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+
+    @staticmethod
+    def generate_fake(count=100):
+        from random import seed, randint
+        import forgery_py
+
+        seed()
+        user_count = User.query.count()
+        for i in range(count):
+            u = User.query.offset(randint(0, user_count - 1)).first()
+            post = Post(body=forgery_py.lorem_ipsum.sentences(randint(1, 5)),
+                        timestamp=forgery_py.date.date(True),
+                        author_id=u.id)
+            db.session.add(post)
+            db.session.commit()
 
 
 class Permission:
