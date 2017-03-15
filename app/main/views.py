@@ -9,7 +9,7 @@ from app.decorators import admin_required
 from . import main
 from app import db
 from .forms import EditProfileForm, EditProfileAdminForm, PostForm
-from ..models import User, Role, Post
+from ..models import User, Role, Post, Permission
 
 
 @main.route('/', methods=['POST', 'GET'])
@@ -96,3 +96,30 @@ def edit_profile_admin(id):
 def post(id):
     post = Post.query.get(int(id))
     return render_template('post.html', post=post)
+
+
+@main.route('/edit/<int:id>', methods=['GET', 'POST'])
+def edit(id):
+    post = Post.query.get_or_404(int(id))
+    if current_user != post.author and \
+            not current_user.can(Permission.ADMINISTER):
+        abort(403)
+    form = PostForm()
+    if form.validate_on_submit():
+        post.body = form.body.data
+        db.session.add(post)
+        flash('post already updated')
+        return redirect(url_for('.post', id=id))
+    form.body.data = post.body
+    return render_template('edit_post.html', form=form, post=post)
+
+
+@main.route('/delete_post/<int:id>')
+def delete_post(id):
+    post = Post.query.get(int(id))
+    if post is None:
+        flash("post doesn't exist")
+    else:
+        db.session.delete(post)
+        flash('delete successfully')
+    return redirect(url_for('main.index'))

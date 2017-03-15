@@ -23,6 +23,24 @@
             {{ post.body }}
             {% endif %}
         </div>
+
+        <div class="post-footer">
+            {% if current_user == post.author %}
+            <a class="post-body" href="{{ url_for('main.edit', id=post.id) }}">
+                <span class="label label-default">Edit</span>
+            </a>
+            <a class="post-body" href="{{ url_for('main.delete_post', id=post.id) }}">
+                <span class="label label-default">Delete</span>
+            </a>
+            {% elif current_user.is_administrator() %}
+            <a class="post-body" href="{{ url_for('main.edit', id=post.id) }}">
+                <span class="label label-danger">Edit [Admin]</span>
+            </a>
+            <a class="post-body" href="{{ url_for('main.delete_post', id=post.id) }}">
+                <span class="label label-danger">Delete</span>
+            </a>
+            {% endif %}
+        </div>
     </div>
 </div>
 {% endif %}
