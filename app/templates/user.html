@@ -36,6 +36,30 @@
             Edit Profile [Admin]
         </a>
         {% endif %}
+        <br /><br />
+        {% if current_user.can(Permission.FOLLOW) and user != current_user %}
+        {% if current_user.is_following(user) %}
+        <a href="{{ url_for('main.unfollow', username=user.username) }}" class="btn btn-default">
+            Unfollow
+        </a>
+        {% else %}
+        <a href="{{ url_for('main.follow', username=user.username) }}" class="btn btn-primary">
+            Follow
+        </a>
+        {% endif %}
+        {% endif %}
+        <a href="{{ url_for('main.followers', username=user.username) }}">
+            Followers: <span class="badge">{{ user.followers.count() }}</span>
+        </a>
+        <a href="{{ url_for('main.follow_ones', username=user.username) }}">
+            Followed: <span class="badge">{{ user.followed.count() }}</span>
+        </a>
+        {% if current_user.is_authenticated and user != current_user %}
+        |
+        <span class="label label-default">
+        {% if user.is_following(current_user) %}Follows{% else %}not follows{% endif %} you
+        </span>
+        {% endif %}
     </div>
 </div>
 

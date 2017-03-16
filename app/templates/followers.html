@@ -1,0 +1,10 @@
+{% extends "_followers.html" %}
+
+{% block title %}Flasky - Followers{% endblock %}
+
+{% block page_content %}
+<div class="page-header">
+    <h2>followers of {{ user.username }}:</h2>
+</div>
+{{ super() }}
+{% endblock %}

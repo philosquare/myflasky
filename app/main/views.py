@@ -5,11 +5,11 @@ from flask import request
 from flask_login import current_user
 from flask_login import login_required
 
-from app.decorators import admin_required
+from app.decorators import admin_required, permission_required
 from . import main
 from app import db
 from .forms import EditProfileForm, EditProfileAdminForm, PostForm
-from ..models import User, Role, Post, Permission
+from ..models import User, Role, Post, Permission, Follow
 
 
 @main.route('/', methods=['POST', 'GET'])
@@ -123,3 +123,41 @@ def delete_post(id):
         db.session.delete(post)
         flash('delete successfully')
     return redirect(url_for('main.index'))
+
+
+@main.route('/follow/<username>')
+@login_required
+@permission_required(Permission.FOLLOW)
+def follow(username):
+    user = User.query.filter_by(username=username).first()
+    current_user.follow(user)
+    flash('followed %s' % username)
+    return redirect(url_for('main.user', username=username))
+
+
+@main.route('/unfollow/<username>')
+@login_required
+@permission_required(Permission.FOLLOW)
+def unfollow(username):
+    user = User.query.filter_by(username=username).first()
+    current_user.unfollow(user)
+    flash('unfollowed %s' % username)
+    return redirect(url_for('main.user', username=username))
+
+
+@main.route('/followers/<username>')
+def followers(username):
+    user = User.query.filter_by(username=username).first()
+    pagination = user.followers.order_by(Follow.timestamp.desc()).paginate(
+        page=request.args.get('page', 1, type=int), per_page=10, error_out=False)
+    followers = [item.follower for item in pagination.items]
+    return render_template('followers.html', followers=followers, user=user, pagination=pagination)
+
+
+@main.route('/is_followed_by/<username>')
+def follow_ones(username):
+    user = User.query.filter_by(username=username).first()
+    pagination = user.followed.order_by(Follow.timestamp.desc()).paginate(
+        page=request.args.get('page', 1, type=int), per_page=10, error_out=False)
+    followers = [item.followed for item in pagination.items]
+    return render_template('followed_ones.html', followers=followers, user=user, pagination=pagination)
