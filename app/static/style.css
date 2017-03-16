@@ -63,8 +63,6 @@ div.flask-pagedown-preview h3 {
 .post-body h3 {
     font-size: 120%;
 }
-li.followers {
-    list-style-type: none;
-    margin: 1px;
-    padding: 0px 0px 110px 0px;
+.table.followers tr {
+    border-bottom: 1px solid #e0e0e0;
 }

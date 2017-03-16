@@ -22,14 +22,17 @@ class Follow(db.Model):
     @staticmethod
     def generate_fake():
         from random import seed, randint
+        import forgery_py
 
         seed()
         for followed in User.query.all():
             active_rate = randint(1, 100)
             for follower in User.query.all():
                 if randint(1, 100) < active_rate:
-                    follower.follow(followed)
-                    db.session.commit()
+                    if not follower.is_following(followed):
+                        f = Follow(follower=follower, followed=followed, timestamp=forgery_py.date.date(True))
+                        db.session.add(f)
+            db.session.commit()
 
 
 class User(UserMixin, db.Model):
@@ -56,6 +59,18 @@ class User(UserMixin, db.Model):
                                backref=db.backref('follower', lazy='joined'),
                                lazy='dynamic', cascade='all, delete-orphan')
 
+    @property
+    def followed_posts_query(self):
+        return Post.query.join(Follow, Follow.followed_id == Post.author_id).filter(
+            Follow.follower_id == self.id)
+
+    @staticmethod
+    def follow_self():
+        for user in User.query.all():
+            user.follow(user)
+            db.session.add(user)
+            db.session.commit()
+
     def is_following(self, user):
         return self.followed.filter_by(followed_id=user.id).first() is not None
 
@@ -79,6 +94,7 @@ class User(UserMixin, db.Model):
                 self.role = Role.query.filter_by(permissions=0xff).first()
             if self.role is None:
                 self.role = Role.query.filter_by(default=True).first()
+            self.follow(self)
 
     def ping(self):
         self.last_seen = datetime.utcnow()

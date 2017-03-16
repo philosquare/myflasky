@@ -21,9 +21,12 @@ def index():
         flash('post successfully')
         return redirect(url_for('.index'))
     page = request.args.get('page', 1, type=int)
-    pagination = Post.query.order_by(Post.timestamp.desc()).paginate(
-        page=page, per_page=current_app.config['FLASKY_POSTS_PER_PAGE'], error_out=False
-    )
+    if current_user.is_authenticated:
+        query = current_user.followed_posts_query
+    else:
+        query = Post.query
+    pagination = query.order_by(Post.timestamp.desc()).paginate(
+        page=page, per_page=current_app.config['FLASKY_POSTS_PER_PAGE'], error_out=False)
     posts = pagination.items
     return render_template('index.html', form=form, posts=posts, pagination=pagination)
 
@@ -148,16 +151,22 @@ def unfollow(username):
 @main.route('/followers/<username>')
 def followers(username):
     user = User.query.filter_by(username=username).first()
+    if user is None:
+        flash('Invalid user')
+        return redirect(url_for('.index'))
     pagination = user.followers.order_by(Follow.timestamp.desc()).paginate(
         page=request.args.get('page', 1, type=int), per_page=10, error_out=False)
-    followers = [item.follower for item in pagination.items]
+    followers = [{'user': item.follower, 'timestamp': item.timestamp} for item in pagination.items]
     return render_template('followers.html', followers=followers, user=user, pagination=pagination)
 
 
 @main.route('/is_followed_by/<username>')
 def follow_ones(username):
     user = User.query.filter_by(username=username).first()
+    if user is None:
+        flash('Invalid user')
+        return redirect(url_for('.index'))
     pagination = user.followed.order_by(Follow.timestamp.desc()).paginate(
         page=request.args.get('page', 1, type=int), per_page=10, error_out=False)
-    followers = [item.followed for item in pagination.items]
+    followers = [{'user': item.followed, 'timestamp': item.timestamp} for item in pagination.items]
     return render_template('followed_ones.html', followers=followers, user=user, pagination=pagination)

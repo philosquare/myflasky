@@ -49,10 +49,10 @@
         {% endif %}
         {% endif %}
         <a href="{{ url_for('main.followers', username=user.username) }}">
-            Followers: <span class="badge">{{ user.followers.count() }}</span>
+            Followers: <span class="badge">{{ user.followers.count() - 1 }}</span>
         </a>
         <a href="{{ url_for('main.follow_ones', username=user.username) }}">
-            Followed: <span class="badge">{{ user.followed.count() }}</span>
+            Followed: <span class="badge">{{ user.followed.count() - 1 }}</span>
         </a>
         {% if current_user.is_authenticated and user != current_user %}
         |
@@ -66,6 +66,8 @@
 <h3>{{ user.username }} 's posts:</h3>
 {% include "_posts.html" %}
 {% if pagination %}
+<div class="pagination">
 {{ macros.pagination_widget(pagination, 'main.user', username=user.username) }}
+</div>
 {% endif %}
 {% endblock %}

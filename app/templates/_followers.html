@@ -2,19 +2,25 @@
 {% import "_pagination.html" as macros %}
 
 {% block page_content %}
-<div class="col-md-4">
-    <ul>
-        {% for follower in followers %}
-        <li class="followers">
-            <div class="post-thumbnail">
-                <a href="{{ url_for('main.user', username=follower.username) }}">
-                    <img class="profile-thumbnail" src="{{ follower.gravatar(size=80) }}">
-                    <p style="top: 90px; position: relative;">{{ follower.username }}</p>
-                </a>
-            </div>
-        </li>
-        {% endfor %}
-    </ul>
+<div class="page-header">
+<table class="table table-hover followers">
+    <thead><tr><th>User</th><th>Since</th></tr></thead>
+    {% for follower in followers %}
+    {% if current_user != follower %}
+    <tr>
+        <td>
+            <a href="{{ url_for('main.user', username=follower.user.username) }}">
+                <img class="img-rounded" src="{{ follower.user.gravatar(size=40) }}">
+                {{ follower.user.username }}
+            </a>
+        </td>
+        <td>
+            {{ moment(follower.timestamp).format('L') }}
+        </td>
+    </tr>
+    {% endif %}
+    {% endfor %}
+</table>
 </div>
 <div class="pagination">
     {{ macros.pagination_widget(pagination, 'main.followers', username=user.username) }}
