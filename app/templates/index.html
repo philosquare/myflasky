@@ -21,8 +21,18 @@
     {{ wtf.quick_form(form) }}
 </div>
 {% endif %}
+<div class="post-tabs">
+    <ul class="nav nav-tabs">
+        {% if current_user.is_authenticated %}
+        <li {% if  not show_followed %} class="active" {% endif %}><a href="{{ url_for('.show_all') }}">All</a></li>
+        <li {% if show_followed %} class="active"{% endif %}><a href="{{ url_for('.show_followed') }}">Followed</a> </li>
+        {% else %}
+        <li class="active">All</li>
+        {% endif %}
+    </ul>
+    {% include "_posts.html" %}
+</div>
 
-{% include "_posts.html" %}
 {% if pagination %}
 <div class="pagination">
     {{ macros.pagination_widget(pagination, 'main.index') }}

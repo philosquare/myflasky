@@ -1,5 +1,6 @@
 from flask import current_app
 from flask import flash
+from flask import make_response
 from flask import redirect, url_for, render_template, abort
 from flask import request
 from flask_login import current_user
@@ -21,21 +22,34 @@ def index():
         flash('post successfully')
         return redirect(url_for('.index'))
     page = request.args.get('page', 1, type=int)
+    show_followed = False
     if current_user.is_authenticated:
+        show_followed = bool(request.cookies.get('show_followed', ''))
+    if show_followed:
         query = current_user.followed_posts_query
     else:
         query = Post.query
     pagination = query.order_by(Post.timestamp.desc()).paginate(
         page=page, per_page=current_app.config['FLASKY_POSTS_PER_PAGE'], error_out=False)
     posts = pagination.items
-    return render_template('index.html', form=form, posts=posts, pagination=pagination)
+    return render_template('index.html', form=form, posts=posts,
+                           pagination=pagination, show_followed=show_followed)
 
 
-@main.route('/admin')
+@main.route('/all')
 @login_required
-@admin_required
-def admin():
-    return 'you are admin'
+def show_all():
+    resp = make_response(redirect(url_for('.index')))
+    resp.set_cookie('show_followed', '', max_age=30*24*60*60)
+    return resp
+
+
+@main.route('/followed')
+@login_required
+def show_followed():
+    resp = make_response(redirect(url_for('.index')))
+    resp.set_cookie('show_followed', '1', max_age=30*24*60*60)
+    return resp
 
 
 @main.route('/user/<username>')
