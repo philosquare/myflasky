@@ -40,7 +40,10 @@
                 <a class="post-body" href="{{ url_for('main.post', id=post.id) }}">
                     <span class="label label-default">Link</span>
                 </a>
-        </div>
+                <a class="post-body" href="{{ url_for('main.post', id=post.id) }}#comments">
+                    <span class="label label-default">Comments</span>
+                </a>
+            </div>
         </div>
     </li>
     {% endfor %}

@@ -6,7 +6,7 @@ from flask_script import Manager
 from flask_script import Shell
 
 from app import create_app, db
-from app.models import User, Role, Post, Follow
+from app.models import User, Role, Post, Follow, Comment
 
 app = create_app(os.getenv('FLASKY_CONFIG') or 'default')
 manager = Manager(app)
@@ -14,7 +14,7 @@ migrate = Migrate(app, db)
 
 
 def make_shell_context():
-    return dict(app=app, db=db, User=User, Role=Role, Post=Post, Follow=Follow)
+    return dict(app=app, db=db, User=User, Role=Role, Post=Post, Follow=Follow, Comment=Comment)
 
 
 @manager.command

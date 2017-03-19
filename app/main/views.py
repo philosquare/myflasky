@@ -9,8 +9,8 @@ from flask_login import login_required
 from app.decorators import admin_required, permission_required
 from . import main
 from app import db
-from .forms import EditProfileForm, EditProfileAdminForm, PostForm
-from ..models import User, Role, Post, Permission, Follow
+from .forms import EditProfileForm, EditProfileAdminForm, PostForm, CommentForm
+from ..models import User, Role, Post, Permission, Follow, Comment
 
 
 @main.route('/', methods=['POST', 'GET'])
@@ -109,10 +109,49 @@ def edit_profile_admin(id):
     return render_template('edit_profile.html', form=form, user=user)
 
 
-@main.route('/post/<int:id>')
+@main.route('/post/<int:id>', methods=['GET', 'POST'])
 def post(id):
+    form = CommentForm()
+    if form.validate_on_submit():
+        comment = Comment(
+            body=form.body.data,
+            author_id=current_user.id,
+            post_id=id,
+            disabled=False
+        )
+        db.session.add(comment)
+        return redirect(url_for('.post', id=id, page=-1))
     post = Post.query.get(int(id))
-    return render_template('post.html', post=post)
+    per_page = current_app.config['FLASKY_COMMENTS_PER_PAGE']
+    page = int(request.args.get('page', 1))
+    if page == -1:
+        page = (post.comments.count() - 1) / per_page + 1
+    pagination = post.comments.order_by(Comment.timestamp.asc()).paginate(
+        page=page, per_page=per_page, error_out=False)
+    comments = pagination.items
+    return render_template('post.html', post=post, pagination=pagination, comments=comments, form=form)
+
+
+@main.route('/delete_comment/<int:id>')
+@login_required
+def delete_comment(id):
+    comment = Comment.query.get_or_404(int(id))
+    if current_user != comment.author:
+        flash("cannot delete others' comments")
+    else:
+        post_id = comment.post_id
+        db.session.delete(comment)
+        flash('delete comment successfully')
+    return redirect(url_for('.post', id=post_id))
+
+
+@main.route('/disable_comment/<int:id>')
+@permission_required(Permission.MODERATE_COMMENTS)
+def disable_comment(id):
+    comment = Comment.query.get_or_404(int(id))
+    comment.disabled = True
+    db.session.add(comment)
+    return redirect(url_for('.post', id=comment.post_id))
 
 
 @main.route('/edit/<int:id>', methods=['GET', 'POST'])

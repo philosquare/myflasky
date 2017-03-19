@@ -50,6 +50,7 @@ class User(UserMixin, db.Model):
     last_seen = db.Column(db.DateTime(), default=datetime.utcnow)
     avatar_hash = db.Column(db.String(32))
     posts = db.relationship('Post', backref='author', lazy='dynamic')
+    comments = db.relationship('Comment', backref='author', lazy='dynamic')
     followers = db.relationship('Follow',
                                 foreign_keys=[Follow.followed_id],
                                 backref=db.backref('followed', lazy='joined'),
@@ -237,6 +238,7 @@ class Post(db.Model):
     body_html = db.Column(db.Text())
     timestamp = db.Column(db.DateTime(), default=datetime.utcnow(), index=True)
     author_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+    comments = db.relationship('Comment', backref='post', lazy='dynamic')
 
     @staticmethod
     def generate_fake(count=100):
@@ -252,6 +254,42 @@ class Post(db.Model):
                         author_id=u.id)
             db.session.add(post)
             db.session.commit()
+
+
+class Comment(db.Model):
+    __tablename__ = 'comments'
+    id = db.Column(db.Integer, primary_key=True)
+    body = db.Column(db.Text)
+    body_html = db.Column(db.Text)
+    timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow())
+    disabled = db.Column(db.Boolean)
+    author_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+    post_id = db.Column(db.Integer, db.ForeignKey('posts.id'))
+
+    @staticmethod
+    def change_on_body(target, value, oldvalue, initiator):
+        allowed_tags = ['a', 'abbr', 'acronym', 'b', 'code', 'em', 'i',
+                        'strong']
+        target.body_html = bleach.linkify(bleach.clean(
+            markdown(value, output_format='html'), tags=allowed_tags, strip=True))
+
+    @staticmethod
+    def generate_fake():
+        from random import randint
+        import forgery_py
+
+        users = User.query.all()
+        posts = Post.query.all()
+        for user in users:
+            for post in posts:
+                if randint(1, 100) < 10:
+                    comment = Comment(body=forgery_py.lorem_ipsum.sentences(randint(1, 5)),
+                                      timestamp=forgery_py.date.date(True),
+                                      author_id=user.id,
+                                      post_id=post.id,
+                                      disabled=False)
+                    db.session.add(comment)
+                    db.session.commit()
 
 
 class Permission:
@@ -282,4 +320,5 @@ def on_change_body(target, value, oldvalue, initiator):
 def on_change_email(target, value, oldvalue, initiator):
     target.avatar_hash = hashlib.md5(value.encode('utf-8')).hexdigest()
 
+db.event.listen(Comment.body, 'set', Comment.change_on_body)
 login_manager.anonymous_user = AnonymousUser

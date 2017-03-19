@@ -11,9 +11,10 @@ class Config(object):
     MAIL_PORT = 25
     MAIL_USE_TLS = False
     MAIL_USERNAME = 'a188616786a@csu.edu.cn'
-    MAIL_PASSWORD = '00432791'
+    MAIL_PASSWORD = os.environ.get('MAIL_PASSWORD')
     FLASKY_MAIL_SENDER = 'me <a188616786a@csu.edu.cn>'
     FLASKY_POSTS_PER_PAGE = 10
+    FLASKY_COMMENTS_PER_PAGE = 10
 
     @staticmethod
     def init_app():
