@@ -27,7 +27,7 @@
         <li {% if  not show_followed %} class="active" {% endif %}><a href="{{ url_for('.show_all') }}">All</a></li>
         <li {% if show_followed %} class="active"{% endif %}><a href="{{ url_for('.show_followed') }}">Followed</a> </li>
         {% else %}
-        <li class="active">All</li>
+        <li class="active"><a>All</a></li>
         {% endif %}
     </ul>
     {% include "_posts.html" %}
