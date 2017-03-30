@@ -129,7 +129,7 @@ def post(id):
     pagination = post.comments.order_by(Comment.timestamp.asc()).paginate(
         page=page, per_page=per_page, error_out=False)
     comments = pagination.items
-    return render_template('post.html', post=post, pagination=pagination, comments=comments, form=form)
+    return render_template('post.html', post=post, pagination=pagination, comments=comments, form=form, page=page)
 
 
 @main.route('/delete_comment/<int:id>')
@@ -151,7 +151,16 @@ def disable_comment(id):
     comment = Comment.query.get_or_404(int(id))
     comment.disabled = True
     db.session.add(comment)
-    return redirect(url_for('.post', id=comment.post_id))
+    return redirect(url_for('.post', id=comment.post_id, page=request.args.get('page', 1, type=int)))
+
+
+@main.route('/enable_comment/<int:id>')
+@permission_required(Permission.MODERATE_COMMENTS)
+def enable_comment(id):
+    comment = Comment.query.get_or_404(int(id))
+    comment.disabled = False
+    db.session.add(comment)
+    return redirect(url_for('.post', id=comment.post_id, page=request.args.get('page', 1, type=int)))
 
 
 @main.route('/edit/<int:id>', methods=['GET', 'POST'])
@@ -223,3 +232,34 @@ def follow_ones(username):
         page=request.args.get('page', 1, type=int), per_page=10, error_out=False)
     followers = [{'user': item.followed, 'timestamp': item.timestamp} for item in pagination.items]
     return render_template('followed_ones.html', followers=followers, user=user, pagination=pagination)
+
+
+@main.route('/moderate')
+@login_required
+@permission_required(Permission.MODERATE_COMMENTS)
+def moderate():
+    page = request.args.get('page', 1, type=int)
+    pagination = Comment.query.order_by(Comment.timestamp.desc()).paginate(
+        page=page, per_page=20, error_out=False)
+    comments = pagination.items
+    return render_template('moderate.html', pagination=pagination, comments=comments, page=page)
+
+
+@main.route('/moderate/disable/<int:id>')
+@login_required
+@permission_required(Permission.MODERATE_COMMENTS)
+def moderate_disable(id):
+    comment = Comment.query.get_or_404(id)
+    comment.disabled = True
+    db.session.add(comment)
+    return redirect(url_for('.moderate', page=request.args.get('page', 1, type=int)))
+
+
+@main.route('/moderate/enable/<int:id>')
+@login_required
+@permission_required(Permission.MODERATE_COMMENTS)
+def moderate_enable(id):
+    comment = Comment.query.get_or_404(id)
+    comment.disabled = False
+    db.session.add(comment)
+    return redirect(url_for('.moderate', page=request.args.get('page', 1, type=int)))

@@ -1,3 +1,11 @@
+{% extends "base.html" %}
+{% import "_pagination.html" as macros %}
+
+{% block title %}Flasky - Moderate{% endblock %}
+
+{% block page_content %}
+<div class="page-header">
+    <h1>Moderate Comments</h1>
 {% if comments %}
 <ul class="comments">
     {% for comment in comments %}
@@ -30,11 +38,11 @@
                 {% endif %}
                 {% if current_user.can(Permission.MODERATE_COMMENTS) %}
                 {% if comment.disabled %}
-                <a class="comment-body" href="{{ url_for('main.enable_comment', id=comment.id, page=page) }}">
+                <a class="comment-body" href="{{ url_for('main.moderate_enable', id=comment.id, page=page) }}">
                     <span class="btn btn-default btn-xs">Enable</span>
                 </a>
                 {% else %}
-                <a class="comment-body" href="{{ url_for('main.disable_comment', id=comment.id, page=page) }}">
+                <a class="comment-body" href="{{ url_for('main.moderate_disable', id=comment.id, page=page) }}">
                     <span class="btn btn-danger btn-xs">Disable</span>
                 </a>
                 {% endif %}
@@ -47,4 +55,15 @@
 </ul>
 {% else %}
 No comment
-{% endif %}
+{% endif %}    {% if pagination %}
+    <div class="pagination">
+        {{ macros.pagination_widget(pagination, 'main.moderate') }}
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+{{ pagedown.include_pagedown() }}
+{% endblock %}
